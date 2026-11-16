@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Arena - Complete Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #home-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-image: url('/assets/menu_bg.png');
+            background-size: 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+        }
+
+        .menu-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.3);
+            min-width: 500px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #00ff88;
+            font-size: 1.1em;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+        }
+
+        .input-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.1em;
+        }
+
+        .map-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .map-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid transparent;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .map-card:hover {
+            transform: translateY(-5px);
+            border-color: #00ff88;
+        }
+
+        .map-card.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .map-preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .menu-btn {
+            flex: 1;
+            padding: 18px 35px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-single {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-multi {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        }
+
+        /* EMOJI WHEEL */
+        #emoji-wheel {
+            position: fixed;
+            bottom: 100px;
+            right: 100px;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid #00ff88;
+            z-index: 1000;
+        }
+
+        #emoji-wheel.show {
+            display: grid;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .emoji-option {
+            font-size: 2.5em;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            user-select: none;
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.3);
+            background: rgba(0, 255, 136, 0.3);
+        }
+
+        /* CHAT BOX - HIDDEN BY DEFAULT */
+        #chat-box {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 15px;
+            border: 2px solid #00ff88;
+            padding: 15px;
+            z-index: 900;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        #chat-box.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        #chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #00ff88;
+            font-size: 14px;
+            animation: slideInChat 0.3s ease-out;
+        }
+
+        @keyframes slideInChat {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .chat-message .player-name {
+            font-weight: bold;
+            color: #00ff88;
+            margin-right: 8px;
+        }
+
+        #chat-input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            position: relative;
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #chat-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00ffaa;
+        }
+
+        #emoji-toggle {
+            padding: 8px 15px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #emoji-toggle:hover {
+            background: rgba(0, 255, 136, 0.4);
+        }
+
+        #emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #00ff88;
+            gap: 5px;
+            flex-wrap: wrap;
+            width: 280px;
+        }
+
+        #emoji-picker.show {
+            display: flex;
+        }
+
+        .emoji-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: rgba(0, 255, 136, 0.3);
+            transform: scale(1.2);
+        }
+
+        /* VOICE CONTROLS */
+        #voice-controls {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #00ff88;
+            display: none;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        #voice-controls.active {
+            display: flex;
+        }
+
+        #voice-controls button {
+            padding: 10px 20px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        #voice-controls button:hover {
+            background: rgba(0, 255, 136, 0.4);
+        }
+
+        #voice-controls button.muted {
+            background: rgba(255, 0, 0, 0.3);
+            border-color: #ff0000;
+        }
+
+        #music-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 15px 25px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            color: #00ff88;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        #music-toggle:hover {
+            background: rgba(0, 255, 136, 0.4);
+            transform: scale(1.05);
+        }
+
+        #game-container {
+            position: relative;
+            display: none;
+        }
+
+        #game-container.active {
+            display: block;
+        }
+
+        /* COMPACT SCOREBOARD - FIXED POSITION */
+        #scoreboard {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            min-width: 180px;
+            max-width: 220px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+            backdrop-filter: blur(10px);
+            border: 2px solid #00ff88;
+            z-index: 1000;
+        }
+
+        #scoreboard strong {
+            font-size: 1.1em;
+            color: #00ff88;
+            display: block;
+            margin-bottom: 8px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #scores {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #scores::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #scores::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 3px;
+        }
+
+        #scores li {
+            padding: 5px 8px;
+            margin: 3px 0;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #00ff88;
+            font-size: 0.9em;
+        }
+
+        /* TIMER - FIXED POSITION */
+        #timer {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ff88;
+            font-size: 1.8em;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+            border: 2px solid #00ff88;
+            z-index: 1000;
+        }
+
+        #winner-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            color: #ffd700;
+            text-shadow: 0 0 30px #ff0000, 0 0 50px #ff0000;
+            display: none;
+            z-index: 100;
+            font-weight: bold;
+            animation: winnerPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes winnerPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        #play-again-btn {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 50px;
+            font-size: 2em;
+            background: linear-gradient(135deg, #00ff88 0%, #00cc70 100%);
+            color: #000;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+            transition: all 0.3s;
+            z-index: 200;
+        }
+
+        #play-again-btn:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        #controls-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 2px solid #00ff88;
+            z-index: 1000;
+            animation: fadeInOut 5s ease-in-out forwards;
+            text-align: center;
+        }
+
+        @keyframes fadeInOut {
+            0%, 80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        #controls-hint.hidden {
+            display: none;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: #00ff88;
+            z-index: 999;
+            text-align: center;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc70);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Chat notification badge */
+        #chat-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: #ff0000;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+            z-index: 899;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+
+<button id="music-toggle">🔊 Music ON</button>
+
+<div id="home-screen">
+    <img src="/assets/menu_bg.png" alt="Tank Arena Background"
+         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;">
+
+    <div class="menu-container">
+        <div class="input-group">
+            <label>Enter Your Name</label>
+            <input type="text" id="player-name" placeholder="Commander" maxlength="12">
+        </div>
+
+        <div class="input-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="enable-voice">
+                Enable Voice Chat
+            </label>
+        </div>
+
+        <div class="input-group">
+            <label>Select Map Theme</label>
+            <div class="map-selection">
+                <div class="map-card selected" data-map="desert">
+                    <div class="map-preview" style="background-image: url('/assets/map.png');"></div>
+                    <strong>Desert Storm</strong>
+                </div>
+                <div class="map-card" data-map="snow">
+                    <div class="map-preview" style="background-image: url('/assets/snow.png');"></div>
+                    <strong>Arctic Warfare</strong>
+                </div>
+                <div class="map-card" data-map="forest">
+                    <div class="map-preview" style="background-image: url('/assets/forest.png');"></div>
+                    <strong>Jungle Combat</strong>
+                </div>
+                <div class="map-card" data-map="urban">
+                    <div class="map-preview" style="background-image: url('/assets/urban.png');"></div>
+                    <strong>Urban Assault</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="menu-btn btn-single" id="single-btn">Single Player</button>
+            <button class="menu-btn btn-multi" id="multi-btn">Multiplayer</button>
+        </div>
+    </div>
+</div>
+
+<div id="game-container">
+    <div id="timer">Time: 5:00</div>
+    <div id="scoreboard">
+        <strong>Scores</strong>
+        <ul id="scores"></ul>
+    </div>
+    <div id="winner-overlay"></div>
+
+    <!-- Voice Controls -->
+    <div id="voice-controls">
+        <button id="mute-btn">🎤 Unmuted</button>
+        <button id="leave-voice-btn">❌ Leave Voice</button>
+    </div>
+
+    <!-- Emoji Wheel -->
+    <div id="emoji-wheel">
+        <div class="emoji-option" data-emoji="👍">👍</div>
+        <div class="emoji-option" data-emoji="😂">😂</div>
+        <div class="emoji-option" data-emoji="😎">😎</div>
+        <div class="emoji-option" data-emoji="😡">😡</div>
+        <div class="emoji-option" data-emoji="❤️">❤️</div>
+        <div class="emoji-option" data-emoji="💀">💀</div>
+        <div class="emoji-option" data-emoji="🔥">🔥</div>
+        <div class="emoji-option" data-emoji="⚡">⚡</div>
+    </div>
+
+    <!-- Chat notification badge -->
+    <div id="chat-notification">New Message! Press T</div>
+
+    <!-- Chat Box (Hidden by default) -->
+    <div id="chat-box">
+        <div id="chat-messages"></div>
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Press T to chat..." maxlength="100">
+            <button id="emoji-toggle">😀</button>
+            <div id="emoji-picker">
+                <button class="emoji-btn" data-emoji="😀">😀</button>
+                <button class="emoji-btn" data-emoji="😂">😂</button>
+                <button class="emoji-btn" data-emoji="😎">😎</button>
+                <button class="emoji-btn" data-emoji="🔥">🔥</button>
+                <button class="emoji-btn" data-emoji="❤️">❤️</button>
+                <button class="emoji-btn" data-emoji="👍">👍</button>
+                <button class="emoji-btn" data-emoji="💀">💀</button>
+                <button class="emoji-btn" data-emoji="⚡">⚡</button>
+                <button class="emoji-btn" data-emoji="😡">😡</button>
+                <button class="emoji-btn" data-emoji="🎮">🎮</button>
+                <button class="emoji-btn" data-emoji="💪">💪</button>
+                <button class="emoji-btn" data-emoji="🎉">🎉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls hint -->
+    <div id="controls-hint">
+        Press <strong>E</strong> for emoji reactions | Press <strong>T</strong> to chat
+    </div>
+</div>
+
+<div class="loading" id="loading" style="display: none;">
+    <div>Loading Assets...</div>
+    <div class="loading-bar">
+        <div class="loading-bar-fill" id="loading-bar-fill"></div>
+    </div>
+</div>
+
+<!-- External Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+<!-- Game Scripts -->
+<script src="/js/emoji-manager.js"></script>
+<script src="/js/chat-manager.js"></script>
+<script src="/js/voice-chat.js"></script>
+<script src="/js/game-main.js"></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

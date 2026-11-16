@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: TankArena
+
+server:
+  port: 8080
+  address: 0.0.0.0  # This tells Spring to listen to your Wi-Fi IP, not just localhost
